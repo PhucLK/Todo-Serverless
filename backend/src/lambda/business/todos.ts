@@ -1,7 +1,7 @@
 import * as uuid from 'uuid';
 
 import { TodoItem } from '../../models/TodoItem';
-import { TodoAccess } from '../dataLayer/todoAccess';
+import { TodoAccess } from '../data/todoAccess';
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest';
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest';
 

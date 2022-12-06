@@ -3,7 +3,7 @@ import { cors, httpErrorHandler } from 'middy/middlewares'
 import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 
-import { deleteTodo } from '../businessLogic/todos'
+import { deleteTodo } from '../business/todos'
 import { getUserId } from '../../auth/utils'
 import { removeAttachment } from '../helpers/attachmentUtil'
 
