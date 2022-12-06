@@ -6,6 +6,7 @@
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "module": "CommonJS",
     "sourceMap": true,
     "target": "es2017",
     "outDir": "lib"
