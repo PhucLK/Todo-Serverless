@@ -5,21 +5,21 @@ service: serverless-todo-app
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
-  - serverless-plugin-tracing
-  - serverless-reqvalidator-plugin
-  - serverless-aws-documentation
+  # - serverless-plugin-tracing
+  # - serverless-reqvalidator-plugin
+  # - serverless-aws-documentation
 
-package:
-  individually: false
+# package:
+#   individually: false
 
-configValidationMode: warn
+# configValidationMode: warn
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs12.x
   # lambdaHashingVersion: '20201221'
 
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'dev2'}
   region: ${opt:region, 'us-east-1'}
 
   tracing:
@@ -37,20 +37,20 @@ provider:
     # Enable API Gateway logs
     restApi: true
 
-custom:
-  documentation:
-    api:
-      info:
-        version: v1.0.0
-        title: Serverless API
-        description: Serverless application for to do monitoring
-    models:
-      - name: CreateTodoRequest
-        contentType: application/json
-        schema: ${file(models/create-todo-model.json)}
-      - name: UpdateTodoRequest
-        contentType: application/json
-        schema: ${file(models/update-todo-model.json)}
+# custom:
+#   documentation:
+#     api:
+#       info:
+#         version: v1.0.0
+#         title: Serverless API
+#         description: Serverless application for to do monitoring
+#     models:
+#       - name: CreateTodoRequest
+#         contentType: application/json
+#         schema: ${file(models/create-todo-model.json)}
+#       - name: UpdateTodoRequest
+#         contentType: application/json
+#         schema: ${file(models/update-todo-model.json)}
 
 functions:
 
@@ -84,12 +84,9 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          reqValidatorName: onlyBody
-          documentation:
-            summary: Create a new todo
-            description: Create a new todo
-            requestModels:
-              application/json: CreateTodoRequest
+          request:
+            schemas:
+              application/json: ${file(models/create-todo-model.json)}
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -104,17 +101,13 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
-          reqValidatorName: onlyBody
-          documentation:
-            summary: Update todo
-            description: Update todo
-            requestModels:
-              application/json: UpdateTodoRequest
+          request:
+            schemas:
+              application/json: ${file(models/update-todo-model.json)}
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-          - dynamodb:GetItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   DeleteTodo:
@@ -168,15 +161,8 @@ functions:
 resources:
   Resources:
     # Add necessary AWS resources. You will need at least the following AWS resources
-    onlyBody:
-      Type: AWS::ApiGateway::RequestValidator
-      Properties:
-        Name: 'only-body'
-        RestApiId:
-          Ref: ApiGatewayRestApi
-        ValidateRequestBody: true
-        ValidateRequestParameters: false
-
+    # TODO: Fill the properties
+    # Feel free to change the names as you like. 
     GatewayResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
