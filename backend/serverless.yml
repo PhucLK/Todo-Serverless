@@ -1,13 +1,13 @@
 org: phuclk
-app: serverless-todo-app
+# app: serverless-todo-app
 service: serverless-todo-app
 
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
-  # - serverless-plugin-tracing
-  # - serverless-reqvalidator-plugin
-  # - serverless-aws-documentation
+  - serverless-plugin-tracing
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
 
 # package:
 #   individually: false
@@ -19,7 +19,7 @@ provider:
   runtime: nodejs12.x
   # lambdaHashingVersion: '20201221'
 
-  stage: ${opt:stage, 'dev2'}
+  stage: ${opt:stage, 'dev4'}
   region: ${opt:region, 'us-east-1'}
 
   tracing:
@@ -37,20 +37,20 @@ provider:
     # Enable API Gateway logs
     restApi: true
 
-# custom:
-#   documentation:
-#     api:
-#       info:
-#         version: v1.0.0
-#         title: Serverless API
-#         description: Serverless application for to do monitoring
-#     models:
-#       - name: CreateTodoRequest
-#         contentType: application/json
-#         schema: ${file(models/create-todo-model.json)}
-#       - name: UpdateTodoRequest
-#         contentType: application/json
-#         schema: ${file(models/update-todo-model.json)}
+custom:
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Serverless API
+        description: Serverless application for to do monitoring
+    models:
+      - name: CreateTodoRequest
+        contentType: application/json
+        schema: ${file(models/create-todo-model.json)}
+      - name: UpdateTodoRequest
+        contentType: application/json
+        schema: ${file(models/update-todo-model.json)}
 
 functions:
 
@@ -69,10 +69,14 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_INDEX}
 
 
@@ -84,6 +88,7 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
+          reqValidatorName: onlyBody
           request:
             schemas:
               application/json: ${file(models/create-todo-model.json)}
@@ -91,6 +96,8 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:PutItem
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   UpdateTodo:
@@ -101,6 +108,7 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
+          reqValidatorName: onlyBody
           request:
             schemas:
               application/json: ${file(models/update-todo-model.json)}
@@ -108,6 +116,8 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   DeleteTodo:
@@ -123,10 +133,14 @@ functions:
         Action:
           - dynamodb:DeleteItem
           - dynamodb:GetItem
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
           - s3:DeleteObject
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
 
   GenerateUploadUrl:
@@ -142,6 +156,8 @@ functions:
         Action:
           - s3:PutObject
           - s3:GetObject
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
 
   UpdateTodoAttachment:
@@ -156,6 +172,8 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
 resources:
@@ -233,3 +251,13 @@ resources:
               Action: 's3:GetObject'
               Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
         Bucket: !Ref AttachmentsBucket
+
+
+    onlyBody:  
+      Type: "AWS::ApiGateway::RequestValidator"
+      Properties:
+        Name: 'only-body'
+        RestApiId: 
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false

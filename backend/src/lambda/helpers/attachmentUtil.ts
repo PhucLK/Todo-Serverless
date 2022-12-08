@@ -3,8 +3,12 @@ import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('S3 Attachment')
 
-const s3 = new AWS.S3({
-  signatureVersion: 'v4'
+const AWSXRay = require("aws-xray-sdk");
+
+const XAWS = AWSXRay.captureAWS(AWS);
+
+const s3 = new XAWS.S3({
+  signatureVersion: "v4",
 });
 
 const bucketName = process.env.ATTACHMENT_S3_BUCKET;
